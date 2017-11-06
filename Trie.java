@@ -5,8 +5,12 @@
  */
 package searching;
 
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -19,14 +23,17 @@ import java.util.logging.Logger;
  */
 public class Trie {
 
+    //suffixprefix
     private class TrieNode {
 
         Map<Character, TrieNode> children;
         boolean endOfWord;
+        String path="";
 
         public TrieNode() {
             children = new HashMap<>();
             endOfWord = false;
+            //path = "";
         }
     }
 
@@ -39,7 +46,7 @@ public class Trie {
     /**
      * Iterative implementation of insert into trie
      */
-    public void insert(String word) {
+    public void insert(String word, String path) {
         TrieNode current = root;
         for (int i = 0; i < word.length(); i++) {
             char ch = word.charAt(i);
@@ -52,6 +59,9 @@ public class Trie {
         }
         //mark the current nodes endOfWord as true
         current.endOfWord = true;
+        if(current.endOfWord == true){
+            current.path = path;    
+        } 
     }
 
     /**
@@ -81,19 +91,20 @@ public class Trie {
     /**
      * Iterative implementation of search into trie.
      */
-    public boolean search(String word) {
+    public String search(String word) {
         TrieNode current = root;
         for (int i = 0; i < word.length(); i++) {
             char ch = word.charAt(i);
             TrieNode node = current.children.get(ch);
             //if node does not exist for given char then return false
             if (node == null) {
-                return false;
+                return "Not found.";
+                //return false;
             }
             current = node;
         }
         //return true of current's endOfWord is true else return false.
-        return current.endOfWord;
+        return "Found in "+current.path;
     }
 
     /**
@@ -152,34 +163,63 @@ public class Trie {
         }
         return false;
     }
-
+    
     public static void main(String[] args) {
         Trie dict = new Trie();
-        StringBuffer line = new StringBuffer();
-        try {
-            FileInputStream file = new FileInputStream("ztotal.txt");
-            Scanner in = new Scanner(file);
 
-            while (in.hasNext()) {
-                String tmp = in.nextLine();
-                System.out.println(tmp);
-                dict.insert(tmp);
+        //Read folder
+        String path = "D:\\ND-Java\\SearchingOnTrie\\Dataset";
+        File file;
+        File folder = new File(path);
+        File[] listOfFiles = folder.listFiles();
+        for (int i = 0; i < listOfFiles.length; i++) {
+            if (listOfFiles[i].isFile()) {
+                file = listOfFiles[i];
+                try {
+                    FileInputStream fis = new FileInputStream(file);
+                    Scanner readfile = new Scanner(fis);
+                    while (readfile.hasNext()) {
+                        String tmp = readfile.nextLine().toLowerCase().trim();
+                        int j = 0;
+                        String tmpsplit[] = tmp.split(" ");
+                        for (String w : tmpsplit) {
+                            dict.insert(w, listOfFiles[i].getName());
+                        }
+                        System.out.println(tmp);
+                        //dict.insert(tmp, listOfFiles[i].getName());
+                    }
+                } catch (FileNotFoundException ex) {
+                    Logger.getLogger(Trie.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(Trie.class.getName()).log(Level.SEVERE, null, ex);
         }
+
+        System.out.println("----------------------------------------------------");
+
         Scanner sc = new Scanner(System.in);
-        String input = sc.nextLine();
-        
+        String input = sc.nextLine().toLowerCase().trim();
+
         while (!input.equals("...")) {
-            long t0 = System.currentTimeMillis();
-            if (dict.search(input) == true) {
-                System.out.println(input+" found");
-            } else {
-                System.out.println("Not found");
+            int j = 0;
+            String tmpinput[] = input.split(" ");
+ 
+            double t0 = System.currentTimeMillis();
+            for (int i = 0; i < tmpinput.length; i++) {
+                System.out.println(tmpinput[i]+" "+dict.search(tmpinput[i]));
+                /*
+                if (dict.search(tmpinput[i]) == true) {
+                    System.out.println(tmpinput[i] + " found in " + dict.root.path);
+                } else {
+                    System.out.println(tmpinput[i] + " 0");
+                }
+                */
             }
-            System.out.println("Time to search: "+(t0-System.currentTimeMillis()));
-            input = sc.nextLine();
+            double t1 = System.currentTimeMillis();
+            double dur = t1-t0;
+            System.out.printf("Time to search: %.8f%n", dur);
+            System.out.println();
+            input = sc.nextLine().toLowerCase().trim();
         }
+
     }
 }
